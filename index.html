@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>হাসপাতাল রিসিপশন হিসাব</title>
+<!-- নতুন ফন্ট: Tiro Bangla -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --primary:#4361ee;
+  --primary-light:#eef2ff;
+  --primary-dark:#3a0ca3;
+  --bg:#f4f6f9;
+  --card-bg:#ffffff;
+  --text-main:#2b2d42;
+  --text-muted:#6c757d;
+  --green:#2a9d8f;
+  --red:#e63946;
+  --border:#dce1e8;
+}
+
+*{box-sizing:border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent;}
+
+body{
+  background-color:var(--bg); 
+  font-family: 'Tiro Bangla', 'Noto Sans Bengali', 'Kalpurush', Arial, sans-serif; 
+  color:var(--text-main); 
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* --- Header --- */
+header{
+  background-color:var(--primary); 
+  color:white; 
+  padding:16px 20px; 
+  position: sticky; 
+  top: 0; 
+  z-index: 10;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+}
+.top{display:flex; align-items:center; gap:12px;}
+.menu-btn{
+  border:0; background:rgba(255,255,255,0.2); color:white; font-size:22px; 
+  cursor: pointer; width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+h2{font-size:17px; font-weight: 600; margin: 0; line-height: 1.2;}
+.date{margin-top:12px; font-size:14px; opacity:.9; font-weight: 400;}
+
+/* --- Main Layout --- */
+main{max-width:600px; margin:0 auto; padding:20px 16px; padding-bottom: 50px;}
+.card{background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:16px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
+.balance{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white; border:none; box-shadow: 0 8px 20px rgba(67, 97, 238, 0.2);}
+.balance small{opacity:.9; font-size: 14px; font-weight: 500;}
+.amount{font-size:32px; font-weight:700; margin-top:6px; letter-spacing: 0.5px;}
+
+.stats{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.stat{background:var(--card-bg); border-radius:20px; padding:20px 16px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
+.stat small{color:var(--text-muted); font-size: 14px; font-weight: 500;}
+.stat strong{display:block; font-size:22px; margin-top:8px; font-weight: 700;}
+
+.green{color:var(--green);} 
+.red{color:var(--red);}
+
+h3{font-size:17px; margin-bottom:16px; font-weight: 600; color: var(--text-main); border-bottom: 2px solid var(--primary-light); padding-bottom: 8px; display: inline-block;}
+
+label{font-size:15px; font-weight: 600; color:var(--text-main); display:block; margin-bottom: 8px; margin-top: 16px;}
+
+/* ইনপুট এবং সিলেক্ট বক্স ডিজাইন */
+input, select{
+  width:100%; 
+  padding:14px 16px; 
+  border:1px solid var(--border); 
+  border-radius:14px; 
+  font-size:16px; 
+  font-family: inherit;
+  background:#f8f9fa;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  appearance: none; 
+  -webkit-appearance: none;
+}
+/* কাস্টম ড্রপডাউন অ্যারো */
+select {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px top 50%;
+  background-size: 12px auto;
+}
+input:focus, select:focus{outline:none; border-color:var(--primary); background: #fff; box-shadow: 0 0 0 4px var(--primary-light);}
+input::placeholder{color:#adb5bd; font-size: 15px;}
+
+button.action{
+  border:0; 
+  border-radius:14px; 
+  background:var(--primary); 
+  color:white; 
+  padding:16px; 
+  font-size:17px; 
+  width:100%; 
+  font-weight:600; 
+  cursor: pointer; 
+  margin-top: 20px;
+  transition: background 0.2s;
+  font-family: inherit;
+  box-shadow: 0 4px 10px rgba(67, 97, 238, 0.2);
+}
+button.action:active{background:var(--primary-dark); transform: translateY(1px);}
+button:disabled{opacity:.5; cursor: not-allowed; box-shadow: none;}
+
+/* --- Transaction List --- */
+.row{display:flex; justify-content:space-between; align-items: center; gap:10px; padding:16px 0; border-bottom:1px solid var(--border);}
+.row:last-child{border:0; padding-bottom: 0;}
+.row-left{display: flex; flex-direction: column;}
+.row-title{font-size: 16px; font-weight: 600;}
+.row-sub{font-size: 13px; color: var(--text-muted); margin-top: 4px;}
+.row-amount{font-size: 17px; font-weight: 700; white-space: nowrap;}
+
+.hidden{display:none !important;}
+.notice{font-size:15px; color:var(--text-muted); text-align: center; padding: 30px 10px;}
+
+/* --- History List --- */
+.day{padding:18px; border: 1px solid var(--border); border-radius: 16px; margin-bottom: 16px; background: #fafbfc;}
+.day strong{display:block; margin-bottom:12px; font-size: 17px; color: var(--primary-dark);}
+.day p{font-size: 15px; margin-bottom: 6px; color: var(--text-main); display: flex; justify-content: space-between;}
+.day p span{font-weight: 600;}
+.day button{
+  margin-top:16px; 
+  padding:12px; 
+  border:0; 
+  border-radius:12px; 
+  background:var(--primary-light); 
+  color:var(--primary); 
+  font-weight:600; 
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* --- Sidebar Drawer CSS --- */
+.overlay{position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:100; opacity:0; visibility:hidden; transition: 0.3s; backdrop-filter: blur(2px);}
+.overlay.active{opacity:1; visibility:visible;}
+
+.sidebar{position:fixed; top:0; left:-320px; width:280px; height:100%; background:var(--card-bg); z-index:101; transition: 0.3s ease-in-out; overflow-y: auto; box-shadow: 4px 0 15px rgba(0,0,0,0.05);}
+.sidebar.active{left:0;}
+
+.sidebar-header{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white; padding:35px 20px;}
+.sidebar-header h1{font-size:20px; margin-bottom:6px; font-weight: 700; line-height: 1.3;}
+.sidebar-header p{font-size:14px; opacity:0.9;}
+
+.sidebar-menu{padding: 16px 12px;}
+.menu-item{display:flex; align-items:center; padding:15px 16px; color:var(--text-main); cursor:pointer; font-size:16px; border-radius: 12px; margin-bottom: 6px; transition: background 0.2s; font-weight: 500;}
+.menu-item:hover, .menu-item.active{background:var(--primary-light); color:var(--primary); font-weight:600;}
+.menu-item span{margin-right:14px; font-size:20px;}
+
+/* --- Modal Popup (About) CSS --- */
+.modal-overlay{position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:105; display:flex; justify-content:center; align-items:center; opacity:0; visibility:hidden; transition: 0.3s; backdrop-filter: blur(2px);}
+.modal-overlay.active{opacity:1; visibility:visible;}
+.modal-content{background:var(--bg); width:90%; max-width:400px; border-radius:24px; padding:24px; text-align:center; transform: translateY(20px); transition: 0.3s; box-shadow: 0 10px 30px rgba(0,0,0,0.2);}
+.modal-overlay.active .modal-content{transform: translateY(0);}
+.modal-icon{font-size:50px; margin-bottom:10px;}
+.modal-title{color:var(--primary-dark); font-size:22px; margin-bottom:20px; font-weight: 700;}
+.info-box{background:white; border-radius:16px; padding:20px; text-align:left; margin-bottom:20px; border: 1px solid var(--border);}
+.info-box p{margin-bottom:8px; font-size:15px; color:var(--text-main);}
+.info-box b{color:var(--primary-dark);}
+.dev-info{color:var(--primary); font-size:18px; font-weight:700; margin: 10px 0;}
+.btn-close-modal{background:var(--primary); color:white; border:none; padding:16px; border-radius:14px; width:100%; font-size:17px; cursor:pointer; font-weight: 600; font-family: inherit;}
+
+</style>
+</head>
+<body>
+
+<!-- Sidebar Overlay -->
+<div class="overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Sidebar Drawer -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>হাসপাতাল রিসিপশন হিসাব</h1>
+    <p>আপনার বিশ্বস্ত হিসাব সহযোগী</p>
+  </div>
+  
+  <div class="sidebar-menu">
+    <a class="menu-item active" onclick="showPage('today', this)"><span>🏠</span> হোম</a>
+    <a class="menu-item" onclick="showPage('history', this)"><span>🕒</span> হিস্ট্রি (History)</a>
+    <a class="menu-item" onclick="openAboutModal()"><span>ℹ️</span> About (অ্যাপ সম্পর্কে)</a>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+ <div class="top">
+  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <h2>হাসপাতাল রিসিপশন হিসাব</h2>
+ </div>
+ <div class="date" id="todayDate"></div>
+</header>
+
+<!-- Main Content -->
+<main>
+<section id="today">
+ <div class="card balance">
+  <small>আজকের হাতে থাকা ব্যালেন্স</small>
+  <div class="amount" id="balance">BDT 0</div>
+  <small id="status">আজকের হিসাব চালু আছে</small>
+ </div>
+
+ <div class="stats">
+  <div class="stat"><small>আজকের মোট আয়</small><strong class="green" id="income">BDT 0</strong></div>
+  <div class="stat"><small>আজকের মোট ব্যয়</small><strong class="red" id="expense">BDT 0</strong></div>
+ </div>
+
+ <!-- নতুন লেনদেন ফর্ম -->
+ <div class="card" style="margin-top:20px">
+  <h3>নতুন লেনদেন</h3>
+  
+  <label>লেনদেনের ধরন</label>
+  <select id="entryType">
+    <option value="income">আয় (Income)</option>
+    <option value="expense">ব্যয় (Expense)</option>
+  </select>
+
+  <label>টাকার পরিমাণ</label>
+  <input id="entryAmount" type="number" min="1" placeholder="যেমন: 500">
+
+  <label>মাধ্যম</label>
+  <select id="entryMedium">
+    <option value="ক্যাশ">ক্যাশ</option>
+    <option value="বিকাশ">বিকাশ</option>
+    <option value="নগদ">নগদ</option>
+    <option value="ব্যাংক">ব্যাংক</option>
+    <option value="অন্যান্য">অন্যান্য</option>
+  </select>
+
+  <label>উৎস / খাত</label>
+  <input id="entryNote" placeholder="তালিকা থেকে বাছুন বা নিজে লিখুন">
+
+  <button class="action" onclick="addEntry()">সংরক্ষণ করুন</button>
+ </div>
+
+ <div class="card">
+  <h3>আজকের লেনদেন</h3>
+  <div id="transactions" class="notice">আজ কোনো লেনদেন নেই।</div>
+ </div>
+
+ <div class="card">
+  <h3>দিনশেষে হস্তান্তর</h3>
+  <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">আজকের অবশিষ্ট টাকা হস্তান্তর করলে আজকের হিসাব বন্ধ হবে।</p>
+  <button class="action" id="handoverBtn" onclick="handover()">হিসাব বন্ধ করুন</button>
+ </div>
+</section>
+
+<section id="history" class="hidden">
+ <div class="card">
+  <h3>পূর্বের হিসাব</h3>
+  <div id="historyList" class="notice">এখনো কোনো হিসাব সংরক্ষিত নেই।</div>
+ </div>
+</section>
+</main>
+
+<!-- About Modal (Popup) -->
+<div class="modal-overlay" id="aboutModal">
+  <div class="modal-content">
+    <div class="modal-icon">📖</div>
+    <div class="modal-title">About (অ্যাপ সম্পর্কে)</div>
+    
+    <div class="info-box">
+      <p><b>অ্যাপের নাম:</b> হাসপাতাল রিসিপশন হিসাব</p>
+      <p><b>সংস্করণ:</b> 1.0</p>
+      <hr style="border:0; border-top:1px solid var(--border); margin: 12px 0;">
+      <p style="color:var(--text-muted);">ডিজাইনার ও ক্রিয়েটর:</p>
+      <div class="dev-info">MT Nazmul Hasan</div>
+      <p>Radiology and Imaging</p>
+      <p>Rangpur IHT</p>
+      <p>Season 2019-2020</p>
+    </div>
+    
+    <button class="btn-close-modal" onclick="closeAboutModal()">ঠিক আছে</button>
+  </div>
+</div>
+
+<script>
+const KEY="hospital_reception_hisab_v1";
+let data=JSON.parse(localStorage.getItem(KEY)||"{}");
+const today=()=>new Date().toLocaleDateString("en-CA");
+const money=n=>"BDT "+Number(n||0).toLocaleString("en-US");
+const current=()=>data[today()]||(data[today()]={entries:[],closed:false,handover:0});
+
+function save(){localStorage.setItem(KEY,JSON.stringify(data));}
+
+// Sidebar Toggle
+function toggleSidebar(){
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  sidebar.classList.toggle("active");
+  overlay.classList.toggle("active");
+}
+
+// About Modal Functions
+function openAboutModal(){
+  toggleSidebar(); 
+  document.getElementById("aboutModal").classList.add("active");
+}
+function closeAboutModal(){
+  document.getElementById("aboutModal").classList.remove("active");
+}
+
+// Page Navigation
+function showPage(page, el){
+ document.getElementById("today").classList.toggle("hidden",page!=="today");
+ document.getElementById("history").classList.toggle("hidden",page!=="history");
+ 
+ const menuItems = document.querySelectorAll('.menu-item');
+ menuItems.forEach(item => item.classList.remove('active'));
+ if(el) el.classList.add('active');
+
+ if(document.getElementById("sidebar").classList.contains("active")){
+    toggleSidebar(); 
+ }
+
+ if(page==="history") renderHistory();
+}
+
+function totals(day){
+ const entries=day.entries||[];
+ return {
+  income:entries.filter(x=>x.type==="income").reduce((a,x)=>a+x.amount,0),
+  expense:entries.filter(x=>x.type==="expense").reduce((a,x)=>a+x.amount,0)
+ };
+}
+
+function addEntry(){
+ const day=current();
+ if(day.closed){alert("আজকের হিসাব বন্ধ করা হয়েছে।");return;}
+ 
+ const type = document.getElementById("entryType").value;
+ const amount = Number(document.getElementById("entryAmount").value);
+ const medium = document.getElementById("entryMedium").value;
+ const note = document.getElementById("entryNote").value.trim();
+
+ if(!amount||amount<=0){alert("সঠিক টাকার পরিমাণ লিখুন।");return;}
+ 
+ const timeString = new Date().toLocaleTimeString("en-US", {hour: '2-digit', minute:'2-digit', hour12: true});
+ 
+ day.entries.push({type, amount, medium, note, time:timeString});
+ 
+ document.getElementById("entryAmount").value="";
+ document.getElementById("entryNote").value="";
+ 
+ save();render();
+}
+
+function handover(){
+ const day=current();
+ if(day.closed)return;
+ const t=totals(day),balance=t.income-t.expense;
+ if(!confirm("দিনশেষে "+money(Math.max(0,balance))+" হস্তান্তর করে হিসাব বন্ধ করবেন?"))return;
+ day.handover=Math.max(0,balance);
+ day.closed=true;
+ day.closedAt=new Date().toLocaleString("en-US");
+ save();render();
+}
+
+function render(){
+ const day=current(),t=totals(day),balance=t.income-t.expense;
+ document.getElementById("todayDate").textContent = new Date().toLocaleDateString("en-GB", {weekday: "long", day: "numeric", month: "long", year: "numeric"});
+ document.getElementById("income").textContent=money(t.income);
+ document.getElementById("expense").textContent=money(t.expense);
+ document.getElementById("balance").textContent=money(day.closed?0:balance);
+ document.getElementById("status").textContent=day.closed?"আজকের টাকা হস্তান্তর সম্পন্ন":"আজকের হিসাব চালু আছে";
+ document.getElementById("handoverBtn").disabled=day.closed;
+ document.getElementById("handoverBtn").textContent=day.closed?"হিসাব বন্ধ হয়েছে":"টাকা হস্তান্তর করে দিন শেষ করুন";
+ const box=document.getElementById("transactions");
+ if(!day.entries.length)box.textContent="আজ কোনো লেনদেন নেই।";
+ else box.innerHTML=day.entries.map(x=>`
+ <div class="row">
+   <div class="row-left">
+     <span class="row-title">${x.type==="income"?"<span class='green'>আয়</span>":"<span class='red'>ব্যয়</span>"} <small style="color:var(--text-muted); font-weight:400;">(${x.medium})</small></span>
+     <span class="row-sub">${escapeHTML(x.note||"বিবরণ নেই")} · ${x.time}</span>
+   </div>
+   <strong class="row-amount ${x.type==="income"?"green":"red"}">${x.type==="income"?"+":"−"} ${money(x.amount)}</strong>
+ </div>`).join("");
+}
+
+function escapeHTML(s){
+ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function renderHistory(){
+ const box=document.getElementById("historyList");
+ const dates=Object.keys(data).filter(d=>d!==today()).sort().reverse();
+ if(!dates.length){box.textContent="এখনো কোনো পূর্বের হিসাব নেই।";return;}
+ box.innerHTML=dates.map(date=>{
+  const day=data[date],t=totals(day);
+  const formattedDate = new Date(date).toLocaleDateString("en-GB", {day: "numeric", month: "long", year: "numeric"});
+  
+  return `<div class="day">
+   <strong>📅 ${formattedDate}</strong>
+   <p>আয়: <span class="green">${money(t.income)}</span></p>
+   <p>ব্যয়: <span class="red">${money(t.expense)}</span></p>
+   <p>অবশিষ্ট: <b>${money(day.handover??(t.income-t.expense))}</b></p>
+   <p>অবস্থা: <span style="color:${day.closed ? 'var(--green)' : 'var(--red)'}">${day.closed?"সম্পন্ন":"বন্ধ হয়নি"}</span></p>
+   <button onclick="sharePDF('${date}')">📄 PDF রিপোর্ট</button>
+  </div>`;
+ }).join("");
+}
+
+function sharePDF(date=today()){
+ const day=data[date];
+ if(!day){alert("এই দিনের হিসাব পাওয়া যায়নি।");return;}
+ const t=totals(day);
+ const handed=day.closed?(day.handover||0):t.income-t.expense;
+ const formattedDate = new Date(date).toLocaleDateString("en-GB", {day: "numeric", month: "long", year: "numeric"});
+
+ const rows=(day.entries||[]).map(x=>
+ `<tr><td>${x.type==="income"?"আয়":"ব্যয়"}</td><td>${x.medium||"-"}</td><td>${escapeHTML(x.note||"—")}</td><td>${x.time}</td><td>${money(x.amount)}</td></tr>`
+ ).join("");
+ const w=window.open("","_blank");
+ if(!w){alert("PDF তৈরি করতে পপ-আপ অনুমতি দিন।");return;}
+ w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>হিসাব - ${formattedDate}</title>
+ <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+ <style>
+ body{font-family:'Tiro Bangla', Arial, sans-serif; padding:30px; color:#222;}
+ h2{text-align:center; color:#4361ee; margin-bottom: 5px;}
+ .date{text-align:center; color:#666; margin-bottom: 30px; font-size: 14px;}
+ table{width:100%; border-collapse:collapse; margin-top:10px; font-size:15px;}
+ td,th{border:1px solid #ddd; padding:12px; text-align:left;}
+ th{background:#f4f6f9; color:#333;}
+ .summary{line-height:2; margin-top:25px; padding:20px; background:#f4f6f9; border-radius:12px;}
+ @media print{button{display:none}}
+ </style></head><body>
+ <h2>হাসপাতাল রিসিপশন হিসাব</h2>
+ <div class="date">তারিখ: ${formattedDate}</div>
+ <table><tr><th>ধরন</th><th>মাধ্যম</th><th>বিবরণ/খাত</th><th>সময়</th><th>টাকা</th></tr>${rows}</table>
+ <div class="summary">
+ <b>মোট আয়:</b> ${money(t.income)}<br>
+ <b>মোট ব্যয়:</b> ${money(t.expense)}<br>
+ <b>দিনশেষে অবশিষ্ট:</b> ${money(handed)}<br>
+ <b>হস্তান্তরের অবস্থা:</b> ${day.closed?"সম্পন্ন":"হয়নি"}
+ </div>
+ <div style="text-align:center; margin-top:40px;">
+ <button onclick="window.print()" style="padding:12px 24px; background:#4361ee; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer; font-weight: bold;">Print / Save as PDF</button>
+ </div>
+ </body></html>`);
+ w.document.close();
+}
+
+// App Initialization
+render();
+</script>
+</body>
+</html>
