@@ -2,10 +2,6 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>হাসপাতাল রিসিপশন হিসাব</title>
 <!-- ফন্ট: Tiro Bangla -->
@@ -441,124 +437,245 @@ function renderHistory(){
    <p>আয়: <span class="green">${money(t.income)}</span></p>
    <p>ব্যয়: <span class="red">${money(t.expense)}</span></p>
    <p>অবশিষ্ট: <b>${money(day.handover??(t.income-t.expense))}</b></p>
-   <p>অবস্থা: <span style="color:${day.closed ? 'var(--green)' : 'var(--red)'}">${day.closed?"সম্পন্ন":"
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>হাসপাতাল রিসিপশন হিসাব</title>
-<!-- নতুন ফন্ট: Tiro Bangla -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
-
-<style>
-:root{
-  --primary:#4361ee;
-  --primary-light:#eef2ff;
-  --primary-dark:#3a0ca3;
-  --bg:#f4f6f9;
-  --card-bg:#ffffff;
-  --text-main:#2b2d42;
-  --text-muted:#6c757d;
-  --green:#2a9d8f;
-  --red:#e63946;
-  --border:#dce1e8;
+   <p>অবস্থা: <span style="color:${day.closed ? 'var(--green)' : 'var(--red)'}">${day.closed?"সম্পন্ন":"বন্ধ হয়নি"}</span></p>
+   <button onclick="sharePDF('${date}')">📄 PDF রিপোর্ট</button>
+  </div>`;
+ }).join("");
 }
 
-*{box-sizing:border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent;}
+// ==== ব্যাকআপ সিস্টেম (JSON Backup) ====
+function createBackup() {
+  toggleSidebar();
+  const hospitalName = localStorage.getItem("reception_user_name") || "Hospital";
+  const backupData = {
+    appId: "HospitalReceptionHisab",
+    version: "1.1",
+    hospitalName: hospitalName,
+    exportDate: new Date().toISOString(),
+    data: data
+  };
 
-body{
-  background-color:var(--bg); 
-  font-family: 'Tiro Bangla', 'Noto Sans Bengali', 'Kalpurush', Arial, sans-serif; 
-  color:var(--text-main); 
-  overflow-x: hidden;
-  line-height: 1.6;
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  
+  const fileName = `HospitalReception_Backup_${yyyy}-${mm}-${dd}_${hh}-${min}.json`;
+
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", fileName);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
 }
 
-/* --- Header --- */
-header{
-  background-color:var(--primary); 
-  color:white; 
-  padding:16px 20px; 
-  position: sticky; 
-  top: 0; 
-  z-index: 10;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  border-bottom-left-radius: 24px;
-  border-bottom-right-radius: 24px;
+// ==== স্মার্ট রিস্টোর সিস্টেম (Smart Merge Restore) ====
+function triggerRestore() {
+  toggleSidebar();
+  document.getElementById("restoreFile").click();
 }
-.top{display:flex; align-items:center; gap:12px;}
-.menu-btn{
-  border:0; background:rgba(255,255,255,0.2); color:white; font-size:22px; 
-  cursor: pointer; width: 40px; height: 40px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+
+function processRestore(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+
+      // ১. অ্যাপ আইডি ও বেসিক ভ্যালিডেশন
+      if (!imported || imported.appId !== "HospitalReceptionHisab" || !imported.data) {
+        alert("ভুল বা অন্য কোনো সফটওয়্যারের ব্যাকআপ ফাইল! এটি রিস্টোর করা সম্ভব নয়।");
+        return;
+      }
+
+      if (!confirm(`আপনি "${imported.hospitalName || 'অজানা'}" এর ব্যাকআপ ফাইলটি রিস্টোর করতে চান কি? পুরোনো ও নতুন ডেটা নিরাপদে মার্জ (Merge) করা হবে।`)) {
+        event.target.value = "";
+        return;
+      }
+
+      // ২. রিস্টোরের আগে কারেন্ট ডেটার সেফটি ব্যাকআপ (Safety Backup) তৈরি করা
+      const safetyKey = "hospital_reception_safety_backup_" + Date.now();
+      localStorage.setItem(safetyKey, JSON.stringify(data));
+
+      const incomingData = imported.data;
+      let newEntriesCount = 0;
+      let duplicateEntriesCount = 0;
+
+      // ৩. Smart Merge Logic (তারিখ ও ইউনিক এন্ট্রি মিলিয়ে মার্জ করা)
+      for (let dateKey in incomingData) {
+        const incomingDay = incomingData[dateKey];
+
+        if (!data[dateKey]) {
+          // যদি ডেটে কোনো হিসাব না থাকে, পুরো দিনটি বসিয়ে দেব
+          data[dateKey] = incomingDay;
+          if (incomingDay.entries && Array.isArray(incomingDay.entries)) {
+            newEntriesCount += incomingDay.entries.length;
+          }
+        } else {
+          // যদি ঐ তারিখে বর্তমান ডেটা থাকে, তবে এন্ট্রিগুলো মার্জ করব
+          const currentDay = data[dateKey];
+          if (!currentDay.entries) currentDay.entries = [];
+
+          if (incomingDay.entries && Array.isArray(incomingDay.entries)) {
+            incomingDay.entries.forEach(incEntry => {
+              // ডুপ্লিকেট চেক: তারিখ, ধরন, পরিমাণ, মাধ্যম, বিবরণ ও সময় মিলিয়ে দেখা
+              const isDuplicate = currentDay.entries.some(curEntry => 
+                curEntry.type === incEntry.type &&
+                curEntry.amount === incEntry.amount &&
+                curEntry.medium === incEntry.medium &&
+                curEntry.note === incEntry.note &&
+                curEntry.time === incEntry.time
+              );
+
+              if (!isDuplicate) {
+                currentDay.entries.push(incEntry);
+                newEntriesCount++;
+              } else {
+                duplicateEntriesCount++;
+              }
+            });
+          }
+
+          // দিন বন্ধ বা হস্তান্তরের স্টেটাস হ্যান্ডেলিং (যদি বর্তমান দিন বন্ধ না থাকে কিন্তু ব্যাকআপে বন্ধ থাকে)
+          if (!currentDay.closed && incomingDay.closed) {
+            currentDay.closed = incomingDay.closed;
+            currentDay.handover = incomingDay.handover;
+            currentDay.closedAt = incomingDay.closedAt;
+          }
+        }
+      }
+
+      // ৪. সংরক্ষণ করা
+      save();
+      render();
+
+      alert(`রিস্টোর সফল হয়েছে! 🎉\n- নতুন যুক্ত হওয়া লেনদেন: ${newEntriesCount}টি\n- ডুপ্লিকেট হিসেবে বাদ দেওয়া লেনদেন: ${duplicateEntriesCount}টি`);
+
+    } catch (err) {
+      alert("JSON ফাইল পড়তে সমস্যা হয়েছে বা ফাইলটি ক্ষতিগ্রস্ত। ফাইল প্রসেস করা যায়নি।");
+      console.error(err);
+    } finally {
+      event.target.value = ""; // রিসেট ইনপুট
+    }
+  };
+  reader.readAsText(file);
 }
-h2{font-size:17px; font-weight: 600; margin: 0; line-height: 1.2;}
-.date{margin-top:12px; font-size:14px; opacity:.9; font-weight: 400;}
 
-/* --- Main Layout --- */
-main{max-width:600px; margin:0 auto; padding:20px 16px; padding-bottom: 50px;}
-.card{background:var(--card-bg); border-radius:20px; padding:20px; margin-bottom:16px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
-.balance{background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:white; border:none; box-shadow: 0 8px 20px rgba(67, 97, 238, 0.2);}
-.balance small{opacity:.9; font-size: 14px; font-weight: 500;}
-.amount{font-size:32px; font-weight:700; margin-top:6px; letter-spacing: 0.5px;}
+// ==== উন্নত A5 PDF রিপোর্ট ও শেয়ার অপশন (স্বয়ংক্রিয় পেজিনেশন সহ) ====
+function sharePDF(date=today()){
+ const day=data[date];
+ if(!day || !day.entries || day.entries.length === 0){
+   alert("এই দিনের কোনো লেনদেন নেই, রিপোর্ট তৈরি করা সম্ভব নয়।");
+   return;
+ }
+ 
+ const t=totals(day);
+ const handed=day.closed?(day.handover||0):t.income-t.expense;
+ const formattedDate = new Date(date).toLocaleDateString("en-GB", {weekday: 'long', day: "numeric", month: "long", year: "numeric"});
+ const hospitalName = localStorage.getItem("reception_user_name") || "হাসপাতাল রিসিপশন";
 
-.stats{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
-.stat{background:var(--card-bg); border-radius:20px; padding:20px 16px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.02);}
-.stat small{color:var(--text-muted); font-size: 14px; font-weight: 500;}
-.stat strong{display:block; font-size:22px; margin-top:8px; font-weight: 700;}
+ let sl = 1;
+ const rows=(day.entries||[]).map(x=>{
+   const typeText = x.type==="income" ? "আয়" : "ব্যয়";
+   const amountColor = x.type==="income" ? "#2a9d8f" : "#e63946";
+   const sign = x.type==="income" ? "+" : "-";
+   return `<tr>
+     <td>${sl++}</td>
+     <td>${typeText} (${x.medium||"-"})</td>
+     <td>${escapeHTML(x.note||"—")}</td>
+     <td>${x.time}</td>
+     <td style="color:${amountColor}; font-weight:bold; text-align:right;">${sign} ${money(x.amount)}</td>
+   </tr>`;
+ }).join("");
 
-.green{color:var(--green);} 
-.red{color:var(--red);}
+ // পপ-আপ উইন্ডো তৈরি করে তাতে রিপোর্ট দেখানো
+ const w=window.open("","_blank");
+ if(!w){alert("রিপোর্ট দেখতে পপ-আপ অনুমতি দিন।");return;}
+ 
+ w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>হিসাব - ${formattedDate}</title>
+ <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+ <style>
+   @page { size: A5 portrait; margin: 10mm; }
+   body{font-family:'Tiro Bangla', Arial, sans-serif; padding:15px; color:#333; background: #fff; max-width: 148mm; margin: 0 auto;}
+   .header{text-align:center; border-bottom: 2px solid #4361ee; padding-bottom: 15px; margin-bottom: 15px;}
+   .header h1{color:#4361ee; margin: 0 0 5px 0; font-size: 22px;}
+   .header h2{color:#333; margin: 0; font-size: 16px;}
+   .meta-info{display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px; color: #555;}
+   table{width:100%; border-collapse:collapse; margin-bottom: 20px; font-size:13px;}
+   tr { page-break-inside: avoid; page-break-after: auto; }
+   thead { display: table-header-group; }
+   th, td{border:1px solid #ddd; padding:8px; text-align:left;}
+   th{background:#f4f6f9; color:#333; font-weight: bold;}
+   tr:nth-child(even) {background-color: #fafbfc;}
+   .summary-box { width: 250px; float: right; border: 1px solid #ddd; border-radius: 8px; padding: 12px; background: #f8f9fa; margin-bottom: 30px; font-size: 14px; page-break-inside: avoid;}
+   .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px;}
+   .summary-row.total { font-weight: bold; font-size: 16px; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 5px;}
+   .footer{clear: both; text-align:center; margin-top: 30px; font-size: 12px; color:#777; border-top: 1px solid #eee; padding-top: 15px; page-break-inside: avoid;}
+   .footer b{color:#4361ee;}
+   .action-btns { text-align: center; margin-top: 20px; }
+   .btn-print { padding: 10px 25px; background: #4361ee; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: bold; margin-right: 10px; }
+   @media print{ .action-btns{display:none;} body{padding: 0;} }
+ </style></head><body>
+ 
+ <div class="header">
+   <h1>${escapeHTML(hospitalName)}</h1>
+   <h2>দৈনিক রিসিপশন হিসাব</h2>
+ </div>
 
-h3{font-size:17px; margin-bottom:16px; font-weight: 600; color: var(--text-main); border-bottom: 2px solid var(--primary-light); padding-bottom: 8px; display: inline-block;}
+ <div class="meta-info">
+   <div><b>তারিখ:</b> ${formattedDate}</div>
+   <div><b>স্ট্যাটাস:</b> ${day.closed?"সম্পন্ন":"চলমান"}</div>
+ </div>
 
-label{font-size:15px; font-weight: 600; color:var(--text-main); display:block; margin-bottom: 8px; margin-top: 16px;}
+ <table>
+   <thead>
+     <tr>
+       <th width="8%">ক্রমিক</th>
+       <th width="22%">ধরন</th>
+       <th width="35%">বিবরণ/খাত</th>
+       <th width="15%">সময়</th>
+       <th width="20%" style="text-align:right;">টাকা</th>
+     </tr>
+   </thead>
+   <tbody>
+     ${rows}
+   </tbody>
+ </table>
 
-/* ইনপুট এবং সিলেক্ট বক্স ডিজাইন */
-input, select{
-  width:100%; 
-  padding:14px 16px; 
-  border:1px solid var(--border); 
-  border-radius:14px; 
-  font-size:16px; 
-  font-family: inherit;
-  background:#f8f9fa;
-  color: var(--text-main);
-  transition: all 0.2s ease;
-  appearance: none; 
-  -webkit-appearance: none;
+ <div class="summary-box">
+   <div class="summary-row">
+     <span>মোট আয়:</span>
+     <span style="color:#2a9d8f;">${money(t.income)}</span>
+   </div>
+   <div class="summary-row">
+     <span>মোট ব্যয়:</span>
+     <span style="color:#e63946;">${money(t.expense)}</span>
+   </div>
+   <div class="summary-row total">
+     <span>অবশিষ্ট ব্যালেন্স:</span>
+     <span>${money(handed)}</span>
+   </div>
+ </div>
+
+ <div class="footer">
+   <p>এই রিপোর্টটি অ্যাপ দ্বারা স্বয়ংক্রিয়ভাবে তৈরি করা হয়েছে।</p>
+   <p>Developed by <b>MT Nazmul Hasan</b></p>
+   <div class="action-btns">
+     <button class="btn-print" onclick="window.print()">Print / Save as PDF</button>
+   </div>
+ </div>
+ </body></html>`);
+ w.document.close();
 }
-/* কাস্টম ড্রপডাউন অ্যারো */
-select {
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236c757d%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px top 50%;
-  background-size: 12px auto;
-}
-input:focus, select:focus{outline:none; border-color:var(--primary); background: #fff; box-shadow: 0 0 0 4px var(--primary-light);}
-input::placeholder{color:#adb5bd; font-size: 15px;}
 
-button.action{
-  border:0; 
-  border-radius:14px; 
-  background:var(--primary); 
-  color:white; 
-  padding:16px; 
-  font-size:17px; 
-  width:100%; 
-  font-weight:600; 
-  cursor: pointer; 
-  margin-top: 20px;
-  transition: background 0.2s;
-  font-family: inherit;
-  box-shadow: 0 4px 10px rgba(67, 97, 238, 0.2);
-}
-button.action:active{background:var(--primary-dark); transform: translateY(1px);}
-button:disabled{opacity:.5; cursor: not-allowed; box-shadow: none;}
-
-/* --- Transaction List --- */
-.row{display:flex; justify-content:space-between; align-items: center; gap:10px; padding:16px 0; border-bottom:1px solid var(--border);}
-.row:last-child{border:0; padding-bottom: 0;}
-.row-left{display: flex; flex-direction: column;}
-.row-title{font-size: 16px; font-weight: 600;}
-োট আয়</small><strong class="green" id="income">BDT 0</strong></div>
-  <div class="stat"><small>আজকের মোট ব্যয়</
+// অ্যাপ চালু হলে সবার আগে লগইন চেক করবে
+checkLogin();
+</script>
+</body>
+</html>
