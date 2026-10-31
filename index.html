@@ -33,16 +33,18 @@ body{
   line-height: 1.6;
 }
 
-/* --- Login Screen --- */
+/* --- Login Screen (ਕিবোর্ড ফ্রেন্ডলি করার জন্য min-height ও overflow ব্যবহার করা হয়েছে) --- */
 #loginScreen {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh;
   background: var(--bg); display: flex; flex-direction: column;
   justify-content: center; align-items: center; z-index: 9999; padding: 20px;
+  overflow-y: auto;
 }
 .login-box {
   background: var(--card-bg); padding: 30px 20px; border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 400px;
   text-align: center; border: 1px solid var(--border);
+  margin: auto;
 }
 .login-icon { font-size: 50px; margin-bottom: 15px; }
 .login-title { font-size: 22px; color: var(--primary-dark); font-weight: 700; margin-bottom: 20px; }
@@ -488,7 +490,6 @@ function processRestore(event) {
     try {
       const imported = JSON.parse(e.target.result);
 
-      // ১. অ্যাপ আইডি ও বেসিক ভ্যালিডেশন
       if (!imported || imported.appId !== "HospitalReceptionHisab" || !imported.data) {
         alert("ভুল বা অন্য কোনো সফটওয়্যারের ব্যাকআপ ফাইল! এটি রিস্টোর করা সম্ভব নয়।");
         return;
@@ -499,7 +500,6 @@ function processRestore(event) {
         return;
       }
 
-      // ২. রিস্টোরের আগে কারেন্ট ডেটার সেফটি ব্যাকআপ (Safety Backup) তৈরি করা
       const safetyKey = "hospital_reception_safety_backup_" + Date.now();
       localStorage.setItem(safetyKey, JSON.stringify(data));
 
@@ -507,24 +507,20 @@ function processRestore(event) {
       let newEntriesCount = 0;
       let duplicateEntriesCount = 0;
 
-      // ৩. Smart Merge Logic (তারিখ ও ইউনিক এন্ট্রি মিলিয়ে মার্জ করা)
       for (let dateKey in incomingData) {
         const incomingDay = incomingData[dateKey];
 
         if (!data[dateKey]) {
-          // যদি ডেটে কোনো হিসাব না থাকে, পুরো দিনটি বসিয়ে দেব
           data[dateKey] = incomingDay;
           if (incomingDay.entries && Array.isArray(incomingDay.entries)) {
             newEntriesCount += incomingDay.entries.length;
           }
         } else {
-          // যদি ঐ তারিখে বর্তমান ডেটা থাকে, তবে এন্ট্রিগুলো মার্জ করব
           const currentDay = data[dateKey];
           if (!currentDay.entries) currentDay.entries = [];
 
           if (incomingDay.entries && Array.isArray(incomingDay.entries)) {
             incomingDay.entries.forEach(incEntry => {
-              // ডুপ্লিকেট চেক: তারিখ, ধরন, পরিমাণ, মাধ্যম, বিবরণ ও সময় মিলিয়ে দেখা
               const isDuplicate = currentDay.entries.some(curEntry => 
                 curEntry.type === incEntry.type &&
                 curEntry.amount === incEntry.amount &&
@@ -542,7 +538,6 @@ function processRestore(event) {
             });
           }
 
-          // দিন বন্ধ বা হস্তান্তরের স্টেটাস হ্যান্ডেলিং (যদি বর্তমান দিন বন্ধ না থাকে কিন্তু ব্যাকআপে বন্ধ থাকে)
           if (!currentDay.closed && incomingDay.closed) {
             currentDay.closed = incomingDay.closed;
             currentDay.handover = incomingDay.handover;
@@ -551,7 +546,6 @@ function processRestore(event) {
         }
       }
 
-      // ৪. সংরক্ষণ করা
       save();
       render();
 
@@ -561,7 +555,7 @@ function processRestore(event) {
       alert("JSON ফাইল পড়তে সমস্যা হয়েছে বা ফাইলটি ক্ষতিগ্রস্ত। ফাইল প্রসেস করা যায়নি।");
       console.error(err);
     } finally {
-      event.target.value = ""; // রিসেট ইনপুট
+      event.target.value = "";
     }
   };
   reader.readAsText(file);
@@ -594,7 +588,6 @@ function sharePDF(date=today()){
    </tr>`;
  }).join("");
 
- // পপ-আপ উইন্ডো তৈরি করে তাতে রিপোর্ট দেখানো
  const w=window.open("","_blank");
  if(!w){alert("রিপোর্ট দেখতে পপ-আপ অনুমতি দিন।");return;}
  
@@ -674,7 +667,6 @@ function sharePDF(date=today()){
  w.document.close();
 }
 
-// অ্যাপ চালু হলে সবার আগে লগইন চেক করবে
 checkLogin();
 </script>
 </body>
